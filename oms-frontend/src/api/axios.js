@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const API = axios.create({
-  baseURL: 'https://osm-backend-kk2a.onrender.com/api',
+  baseURL: 'https://manufacturing-oms-hcl-project.onrender.com/api',
 })
 
 API.interceptors.request.use((req) => {
