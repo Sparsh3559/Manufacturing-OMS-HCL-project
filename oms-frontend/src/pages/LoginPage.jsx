@@ -16,21 +16,27 @@ export default function LoginPage() {
     try {
       const res = await API.post('/auth/login', form)
       const { token, name, email, role } = res.data.data
+
       localStorage.setItem('token', token)
       localStorage.setItem('name', name)
       localStorage.setItem('email', email)
       localStorage.setItem('role', role)
 
-      // Get userId for future order creation
+      // Decode JWT to get userId — it's stored in the token payload
       try {
-        const usersRes = await API.get('/users')
-        const me = (usersRes.data.data || []).find(u => u.email === email)
-        if (me) localStorage.setItem('userId', me.id)
-      } catch {}
+        const payload = JSON.parse(atob(token.split('.')[1]))
+        if (payload.userId) {
+          localStorage.setItem('userId', payload.userId)
+        }
+      } catch (e) {
+        console.error('Could not decode token', e)
+      }
 
-      if (role === 'PURCHASE') navigate('/bom')
-      else if (role === 'FINANCE') navigate('/dashboard')
+      // Navigate based on role
+      if (role === 'PURCHASE') navigate('/purchase-orders')
+      else if (role === 'PRODUCTION') navigate('/bom')
       else navigate('/dashboard')
+
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid email or password')
     } finally {
@@ -49,7 +55,7 @@ export default function LoginPage() {
             <span className="text-xl font-bold text-slate-900">Monolith OMS</span>
           </div>
           <h2 className="text-3xl font-extrabold text-slate-900 mb-2">Welcome Back</h2>
-          <p className="text-slate-500 text-sm">Login in to your <br/>Manufacturing Order Management Platform</p>
+          <p className="text-slate-500 text-sm">Login in to your <br />Manufacturing Order Management Platform</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">

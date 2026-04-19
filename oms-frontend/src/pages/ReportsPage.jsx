@@ -7,8 +7,8 @@ import {
 import { RefreshCw, TrendingUp, TrendingDown } from 'lucide-react'
 import API from '../api/axios'
 
-const COLORS = ['#4f46e5','#10b981','#f59e0b','#ef4444','#8b5cf6']
-const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const STATUS_COLORS = {
   PENDING: '#f59e0b', PROCESSING: '#3b82f6',
   DISPATCHED: '#8b5cf6', DELIVERED: '#10b981', CANCELLED: '#ef4444',
@@ -31,11 +31,11 @@ export default function ReportsPage() {
         API.get('/invoices'),
         API.get('/payments'),
       ])
-      setOrders(ordRes.data.data || [])
-      setInvoices(invRes.data.data || [])
-      setPayments(payRes.data.data || [])
+      setOrders(ordRes.data?.data || ordRes.data || [])
+      setInvoices(invRes.data?.data || invRes.data || [])
+      setPayments(payRes.data?.data || payRes.data || [])
     } catch (err) {
-      console.error(err)
+      console.error('Reports fetch error:', err)
     } finally {
       setLoading(false)
     }
@@ -47,27 +47,27 @@ export default function ReportsPage() {
     delivered: orders.filter(o => new Date(o.createdAt).getMonth() === i && o.status === 'DELIVERED').length,
   }))
 
-  const statusData = ['PENDING','PROCESSING','DISPATCHED','DELIVERED','CANCELLED'].map(s => ({
+  const statusData = ['PENDING', 'PROCESSING', 'DISPATCHED', 'DELIVERED', 'CANCELLED'].map(s => ({
     name: s, value: orders.filter(o => o.status === s).length, color: STATUS_COLORS[s],
   })).filter(s => s.value > 0)
 
-  const totalRevenue = invoices.filter(i => i.status === 'PAID').reduce((a,i) => a + (i.totalAmount||0), 0)
-  const totalPending = invoices.filter(i => i.status !== 'PAID').reduce((a,i) => a + (i.totalAmount||0), 0)
-  const totalReceived = payments.reduce((a,p) => a + (p.amountPaid||0), 0)
+  const totalRevenue = invoices.filter(i => i.status === 'PAID').reduce((a, i) => a + (i.totalAmount || 0), 0)
+  const totalPending = invoices.filter(i => i.status !== 'PAID').reduce((a, i) => a + (i.totalAmount || 0), 0)
+  const totalReceived = payments.reduce((a, p) => a + (p.amountPaid || 0), 0)
 
   const revenueBar = [
     { name: 'Collected', value: totalRevenue, fill: '#10b981' },
     { name: 'Pending', value: totalPending, fill: '#f59e0b' },
   ]
 
-  const paymentMethods = ['BANK_TRANSFER','CHEQUE','CASH','ONLINE','UPI'].map(m => ({
-    name: m.replace('_',' '),
-    value: payments.filter(p => p.paymentMethod === m).reduce((a,p) => a + (p.amountPaid||0), 0),
+  const paymentMethods = ['BANK_TRANSFER', 'CHEQUE', 'CASH', 'ONLINE', 'UPI'].map(m => ({
+    name: m.replace('_', ' '),
+    value: payments.filter(p => p.paymentMethod === m).reduce((a, p) => a + (p.amountPaid || 0), 0),
   })).filter(p => p.value > 0)
 
   if (loading) return (
     <div className="p-8 space-y-4">
-      {[1,2,3,4].map(i => <div key={i} className="h-48 bg-slate-100 rounded-2xl animate-pulse" />)}
+      {[1, 2, 3, 4].map(i => <div key={i} className="h-48 bg-slate-100 rounded-2xl animate-pulse" />)}
     </div>
   )
 
@@ -88,7 +88,7 @@ export default function ReportsPage() {
       <div className="grid grid-cols-4 gap-4">
         {[
           { label: 'Total Orders', value: orders.length, trend: '+12%', up: true },
-          { label: 'Delivered', value: orders.filter(o=>o.status==='DELIVERED').length, trend: `${orders.length ? Math.round(orders.filter(o=>o.status==='DELIVERED').length/orders.length*100) : 0}% rate`, up: true },
+          { label: 'Delivered', value: orders.filter(o => o.status === 'DELIVERED').length, trend: `${orders.length ? Math.round(orders.filter(o => o.status === 'DELIVERED').length / orders.length * 100) : 0}% rate`, up: true },
           ...(role === 'ADMIN' ? [
             { label: 'Total Revenue', value: `₹${totalRevenue.toLocaleString()}`, trend: 'Collected', up: true },
             { label: 'Outstanding', value: `₹${totalPending.toLocaleString()}`, trend: 'Pending', up: false },
@@ -117,18 +117,18 @@ export default function ReportsPage() {
             <AreaChart data={monthlyOrders}>
               <defs>
                 <linearGradient id="rg1" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.2}/>
-                  <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="rg2" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="month" tick={{fontSize:11,fill:'#94a3b8'}} axisLine={false} tickLine={false} />
-              <YAxis tick={{fontSize:11,fill:'#94a3b8'}} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{borderRadius:8,border:'none',boxShadow:'0 4px 20px rgba(0,0,0,0.1)',fontSize:12}} />
+              <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', fontSize: 12 }} />
               <Legend />
               <Area type="monotone" dataKey="placed" stroke="#4f46e5" strokeWidth={2} fill="url(#rg1)" name="Orders Placed" />
               <Area type="monotone" dataKey="delivered" stroke="#10b981" strokeWidth={2} fill="url(#rg2)" name="Delivered" />
@@ -153,7 +153,7 @@ export default function ReportsPage() {
                 {statusData.map(s => (
                   <div key={s.name} className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full" style={{backgroundColor:s.color}} />
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
                       <span className="text-slate-500">{s.name}</span>
                     </div>
                     <span className="font-bold text-slate-900">{s.value}</span>
@@ -173,12 +173,12 @@ export default function ReportsPage() {
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={revenueBar}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="name" tick={{fontSize:11,fill:'#94a3b8'}} axisLine={false} tickLine={false} />
-              <YAxis tick={{fontSize:11,fill:'#94a3b8'}} axisLine={false} tickLine={false}
-                tickFormatter={v => `₹${(v/1000).toFixed(0)}k`} />
+              <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false}
+                tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
               <Tooltip formatter={v => [`₹${Number(v).toLocaleString()}`, 'Amount']}
-                contentStyle={{borderRadius:8,border:'none',boxShadow:'0 4px 20px rgba(0,0,0,0.1)',fontSize:12}} />
-              <Bar dataKey="value" radius={[6,6,0,0]}>
+                contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', fontSize: 12 }} />
+              <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                 {revenueBar.map((b, i) => <Cell key={i} fill={b.fill} />)}
               </Bar>
             </BarChart>
@@ -202,7 +202,7 @@ export default function ReportsPage() {
                 {paymentMethods.map((m, i) => (
                   <div key={m.name} className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full" style={{backgroundColor:COLORS[i%COLORS.length]}} />
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
                       <span className="text-slate-500">{m.name}</span>
                     </div>
                     <span className="font-bold text-slate-900">₹{Number(m.value).toLocaleString()}</span>
@@ -221,7 +221,7 @@ export default function ReportsPage() {
           <p className="text-xs text-slate-400 mb-5">Key performance indicators from the project document</p>
           <div className="grid grid-cols-3 gap-6">
             {[
-              { label: 'On-time Delivery Rate', target: '95%', actual: `${orders.length ? Math.round(orders.filter(o=>o.status==='DELIVERED').length/orders.length*100) : 0}%`, good: true },
+              { label: 'On-time Delivery Rate', target: '95%', actual: `${orders.length ? Math.round(orders.filter(o => o.status === 'DELIVERED').length / orders.length * 100) : 0}%`, good: true },
               { label: 'Invoice Accuracy', target: '98%', actual: '98%', good: true },
               { label: 'User Adoption Rate', target: '90%', actual: '—', good: true },
             ].map(m => (

@@ -35,16 +35,21 @@ export default function PaymentPage() {
         API.get('/payments'),
         API.get('/invoices'),
       ])
-      const allPayments = paymentsRes.data.data || []
+
+      // Handle both response formats
+      const allPayments = paymentsRes.data?.data || paymentsRes.data || []
       setPayments(allPayments)
-      setTotalReceived(allPayments.reduce((a, p) => a + (p.amountPaid || 0), 0))
-      // Only show unpaid/partially paid invoices for payment recording
-      const unpaidInvoices = (invoicesRes.data.data || []).filter(i =>
+      setTotalReceived(
+        allPayments.reduce((a, p) => a + (parseFloat(p.amountPaid) || 0), 0)
+      )
+
+      const allInvoices = invoicesRes.data?.data || invoicesRes.data || []
+      const unpaidInvoices = allInvoices.filter(i =>
         i.status === 'UNPAID' || i.status === 'PARTIALLY_PAID'
       )
       setInvoices(unpaidInvoices)
     } catch (err) {
-      console.error(err)
+      console.error('Payment fetch error:', err)
     } finally {
       setLoading(false)
     }
@@ -54,7 +59,7 @@ export default function PaymentPage() {
     try {
       const res = await API.get(`/payments/invoice/${invoiceId}/balance`)
       setBalance(res.data.data)
-    } catch {}
+    } catch { }
   }
 
   const handleCreate = async (e) => {
@@ -68,7 +73,7 @@ export default function PaymentPage() {
         referenceNumber: form.referenceNumber || null,
         remarks: form.remarks || null,
       })
-      setForm({ invoiceId:'', amountPaid:'', paymentMethod:'BANK_TRANSFER', referenceNumber:'', remarks:'' })
+      setForm({ invoiceId: '', amountPaid: '', paymentMethod: 'BANK_TRANSFER', referenceNumber: '', remarks: '' })
       setShowCreate(false)
       setBalance(null)
       fetchAll()
@@ -121,7 +126,7 @@ export default function PaymentPage() {
           <form onSubmit={handleCreate} className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <label className="block text-xs font-semibold text-slate-600 mb-1">Select Invoice *</label>
-              <select value={form.invoiceId} onChange={e=>setForm(p=>({...p,invoiceId:e.target.value}))}
+              <select value={form.invoiceId} onChange={e => setForm(p => ({ ...p, invoiceId: e.target.value }))}
                 required className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <option value="">Choose an invoice...</option>
                 {invoices.map(inv => (
@@ -138,28 +143,28 @@ export default function PaymentPage() {
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1">Amount Paid (₹) *</label>
-              <input type="number" value={form.amountPaid} onChange={e=>setForm(p=>({...p,amountPaid:e.target.value}))}
+              <input type="number" value={form.amountPaid} onChange={e => setForm(p => ({ ...p, amountPaid: e.target.value }))}
                 required min="1" placeholder="150000"
                 className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1">Payment Method *</label>
-              <select value={form.paymentMethod} onChange={e=>setForm(p=>({...p,paymentMethod:e.target.value}))}
+              <select value={form.paymentMethod} onChange={e => setForm(p => ({ ...p, paymentMethod: e.target.value }))}
                 className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                {['BANK_TRANSFER','CHEQUE','CASH','ONLINE','UPI'].map(m => (
-                  <option key={m} value={m}>{m.replace('_',' ')}</option>
+                {['BANK_TRANSFER', 'CHEQUE', 'CASH', 'ONLINE', 'UPI'].map(m => (
+                  <option key={m} value={m}>{m.replace('_', ' ')}</option>
                 ))}
               </select>
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1">Reference Number</label>
-              <input type="text" value={form.referenceNumber} onChange={e=>setForm(p=>({...p,referenceNumber:e.target.value}))}
+              <input type="text" value={form.referenceNumber} onChange={e => setForm(p => ({ ...p, referenceNumber: e.target.value }))}
                 placeholder="TXN-2025-001"
                 className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1">Remarks</label>
-              <input type="text" value={form.remarks} onChange={e=>setForm(p=>({...p,remarks:e.target.value}))}
+              <input type="text" value={form.remarks} onChange={e => setForm(p => ({ ...p, remarks: e.target.value }))}
                 placeholder="Optional note"
                 className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
@@ -181,7 +186,7 @@ export default function PaymentPage() {
       <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
         {loading ? (
           <div className="p-6 space-y-3">
-            {[1,2,3].map(i => <div key={i} className="h-12 bg-slate-100 rounded-lg animate-pulse" />)}
+            {[1, 2, 3].map(i => <div key={i} className="h-12 bg-slate-100 rounded-lg animate-pulse" />)}
           </div>
         ) : (
           <table className="w-full">
@@ -195,11 +200,11 @@ export default function PaymentPage() {
             <tbody>
               {payments.map((payment, i) => (
                 <tr key={i} className="border-b border-slate-50 hover:bg-slate-50">
-                  <td className="px-6 py-4 font-mono text-xs text-slate-500">#{payment.invoiceId?.substring(0,8).toUpperCase()}</td>
+                  <td className="px-6 py-4 font-mono text-xs text-slate-500">#{payment.invoiceId?.substring(0, 8).toUpperCase()}</td>
                   <td className="px-6 py-4 text-sm font-bold text-emerald-700">₹{payment.amountPaid?.toLocaleString()}</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold ${METHOD_STYLES[payment.paymentMethod] || 'bg-slate-100 text-slate-600'}`}>
-                      {payment.paymentMethod?.replace('_',' ')}
+                      {payment.paymentMethod?.replace('_', ' ')}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-500">{payment.referenceNumber || '—'}</td>

@@ -28,7 +28,6 @@ export default function OrdersPage() {
   const [form, setForm] = useState({
     customerName: '', customerEmail: '', customerPhone: '',
     productName: '', quantity: '', notes: '',
-    createdByUserId: localStorage.getItem('userId') || ''
   })
   const [page, setPage] = useState(1)
   const PER_PAGE = 10
@@ -63,17 +62,22 @@ export default function OrdersPage() {
     setCreateError('')
     setCreating(true)
     try {
-      // Get userId from users if not stored
-      let userId = localStorage.getItem('userId')
+      const userId = localStorage.getItem('userId')
       if (!userId) {
-        const email = localStorage.getItem('email')
-        const usersRes = await API.get('/users')
-        const me = (usersRes.data.data || []).find(u => u.email === email)
-        userId = me?.id
-        if (userId) localStorage.setItem('userId', userId)
+        setCreateError('Session error — please logout and login again')
+        setCreating(false)
+        return
       }
-      await API.post('/orders', { ...form, createdByUserId: userId, quantity: parseInt(form.quantity) })
-      setForm({ customerName:'', customerEmail:'', customerPhone:'', productName:'', quantity:'', notes:'', createdByUserId: userId })
+      await API.post('/orders', {
+        customerName: form.customerName,
+        customerEmail: form.customerEmail || null,
+        customerPhone: form.customerPhone || null,
+        productName: form.productName,
+        quantity: parseInt(form.quantity),
+        notes: form.notes || null,
+        createdByUserId: userId,
+      })
+      setForm({ customerName: '', customerEmail: '', customerPhone: '', productName: '', quantity: '', notes: '' })
       setShowCreate(false)
       fetchOrders()
     } catch (err) {
@@ -94,13 +98,23 @@ export default function OrdersPage() {
     }
   }
 
+  const handleAdvanceStatus = async (orderId, newStatus, e) => {
+    e.stopPropagation()
+    try {
+      await API.patch(`/orders/${orderId}/status?newStatus=${newStatus}`)
+      fetchOrders()
+    } catch (err) {
+      alert(err.response?.data?.message || 'Could not update status')
+    }
+  }
+
   const canCreate = role === 'ADMIN' || role === 'SALES'
-  const totalPages = Math.ceil(filtered.length / PER_PAGE)
+  const canAdvance = role === 'ADMIN' || role === 'SALES'
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE))
   const paged = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
 
   return (
     <div className="p-8 space-y-6">
-      {/* Header */}
       <div className="flex items-end justify-between pb-2">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Orders Management</h1>
@@ -108,22 +122,19 @@ export default function OrdersPage() {
         </div>
         <div className="flex gap-3">
           <button className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 bg-white rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50">
-            <Download className="w-4 h-4" />
-            Export CSV
+            <Download className="w-4 h-4" />Export CSV
           </button>
           {canCreate && (
             <button
               onClick={() => setShowCreate(!showCreate)}
               className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-br from-indigo-700 to-indigo-500 text-white rounded-lg text-sm font-bold hover:opacity-90 shadow-lg shadow-indigo-200"
             >
-              <Plus className="w-4 h-4" />
-              Create New Order
+              <Plus className="w-4 h-4" />Create New Order
             </button>
           )}
         </div>
       </div>
 
-      {/* Create Order Form */}
       {showCreate && canCreate && (
         <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
           <h3 className="font-bold text-slate-900 mb-4">New Order</h3>
@@ -137,6 +148,7 @@ export default function OrdersPage() {
               { label: 'Customer Phone', key: 'customerPhone', type: 'text', placeholder: '9876543210' },
               { label: 'Product Name *', key: 'productName', type: 'text', placeholder: 'UPS Machine 5KVA', required: true },
               { label: 'Quantity *', key: 'quantity', type: 'number', placeholder: '5', required: true },
+              { label: 'Notes', key: 'notes', type: 'text', placeholder: 'Optional notes' },
             ].map(field => (
               <div key={field.key}>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">{field.label}</label>
@@ -151,21 +163,13 @@ export default function OrdersPage() {
                 />
               </div>
             ))}
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Notes</label>
-              <input
-                type="text"
-                value={form.notes}
-                onChange={e => setForm(p => ({ ...p, notes: e.target.value }))}
-                placeholder="Optional notes"
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
             <div className="col-span-3 flex gap-3 pt-2">
-              <button type="submit" disabled={creating} className="px-6 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-60">
+              <button type="submit" disabled={creating}
+                className="px-6 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-60">
                 {creating ? 'Creating...' : 'Create Order'}
               </button>
-              <button type="button" onClick={() => setShowCreate(false)} className="px-6 py-2 border border-slate-200 text-slate-600 text-sm font-semibold rounded-lg hover:bg-slate-50">
+              <button type="button" onClick={() => setShowCreate(false)}
+                className="px-6 py-2 border border-slate-200 text-slate-600 text-sm font-semibold rounded-lg hover:bg-slate-50">
                 Cancel
               </button>
             </div>
@@ -173,7 +177,6 @@ export default function OrdersPage() {
         </div>
       )}
 
-      {/* Filter Bar */}
       <div className="bg-slate-100 rounded-xl p-4 flex items-center gap-4">
         <div className="flex items-center gap-2 bg-white border border-slate-200/50 px-3 py-2 rounded-lg">
           <span className="text-sm text-slate-500 font-medium">Status:</span>
@@ -187,7 +190,6 @@ export default function OrdersPage() {
             ))}
           </select>
         </div>
-
         <div className="flex items-center gap-2 bg-white border border-slate-200/50 px-3 py-2 rounded-lg flex-1 max-w-xs">
           <Search className="w-4 h-4 text-slate-400" />
           <input
@@ -200,7 +202,6 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-xl border border-slate-200/50 shadow-sm overflow-hidden">
         {loading ? (
           <div className="p-8 space-y-3">
@@ -215,19 +216,13 @@ export default function OrdersPage() {
                     <input type="checkbox" className="rounded border-slate-300" />
                   </th>
                   {['Order ID', 'Customer', 'Date', 'Product', 'Qty', 'Status', 'Actions'].map(h => (
-                    <th key={h} className="px-4 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                      {h}
-                    </th>
+                    <th key={h} className="px-4 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {paged.map((order, i) => (
-                  <tr
-                    key={i}
-                    className="border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-colors"
-                    onClick={() => {}}
-                  >
+                  <tr key={i} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4" onClick={e => e.stopPropagation()}>
                       <input type="checkbox" className="rounded border-slate-300" />
                     </td>
@@ -237,17 +232,15 @@ export default function OrdersPage() {
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-xs font-bold flex-shrink-0">
-                          {order.customerName?.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}
+                          {order.customerName?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
                         </div>
                         <span className="text-sm font-semibold text-slate-900">{order.customerName}</span>
                       </div>
                     </td>
                     <td className="px-4 py-4 text-sm text-slate-500">
-                      {new Date(order.createdAt).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })}
+                      {new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </td>
-                    <td className="px-4 py-4 text-sm text-slate-700 max-w-[160px] truncate">
-                      {order.productName}
-                    </td>
+                    <td className="px-4 py-4 text-sm text-slate-700 max-w-[140px] truncate">{order.productName}</td>
                     <td className="px-4 py-4 text-sm font-bold text-slate-900">{order.quantity}</td>
                     <td className="px-4 py-4">
                       <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${STATUS_STYLES[order.status] || 'bg-slate-100 text-slate-600'}`}>
@@ -255,14 +248,46 @@ export default function OrdersPage() {
                       </span>
                     </td>
                     <td className="px-4 py-4" onClick={e => e.stopPropagation()}>
-                      <div className="flex items-center gap-1">
-                        <button className="p-2 hover:bg-slate-100 rounded-lg" title="View">
-                          <Eye className="w-4 h-4 text-slate-500" />
+                      <div className="flex items-center gap-1 flex-wrap">
+                        <button
+                          onClick={e => { e.stopPropagation() }}
+                          className="p-1.5 hover:bg-slate-100 rounded-lg"
+                          title="View"
+                        >
+                          <Eye className="w-4 h-4 text-slate-400" />
                         </button>
-                        {(role === 'ADMIN' || role === 'SALES') && order.status !== 'DELIVERED' && order.status !== 'CANCELLED' && (
+
+                        {canAdvance && order.status === 'PENDING' && (
                           <button
-                            onClick={(e) => handleCancel(order.id, e)}
-                            className="p-2 hover:bg-red-50 rounded-lg"
+                            onClick={e => handleAdvanceStatus(order.id, 'PROCESSING', e)}
+                            className="text-[9px] px-2 py-1 bg-blue-100 text-blue-700 rounded font-bold hover:bg-blue-200 whitespace-nowrap"
+                          >
+                            PROCESS
+                          </button>
+                        )}
+
+                        {canAdvance && order.status === 'PROCESSING' && (
+                          <button
+                            onClick={e => handleAdvanceStatus(order.id, 'DISPATCHED', e)}
+                            className="text-[9px] px-2 py-1 bg-purple-100 text-purple-700 rounded font-bold hover:bg-purple-200 whitespace-nowrap"
+                          >
+                            DISPATCH
+                          </button>
+                        )}
+
+                        {canAdvance && order.status === 'DISPATCHED' && (
+                          <button
+                            onClick={e => handleAdvanceStatus(order.id, 'DELIVERED', e)}
+                            className="text-[9px] px-2 py-1 bg-emerald-100 text-emerald-700 rounded font-bold hover:bg-emerald-200 whitespace-nowrap"
+                          >
+                            DELIVER
+                          </button>
+                        )}
+
+                        {canCreate && !['DELIVERED', 'CANCELLED'].includes(order.status) && (
+                          <button
+                            onClick={e => handleCancel(order.id, e)}
+                            className="p-1.5 hover:bg-red-50 rounded-lg"
                             title="Cancel"
                           >
                             <Trash2 className="w-4 h-4 text-red-400" />
@@ -282,15 +307,14 @@ export default function OrdersPage() {
               </tbody>
             </table>
 
-            {/* Pagination */}
             <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/50 px-6 py-3">
               <p className="text-xs text-slate-500">
-                Showing <span className="font-bold text-slate-800">{(page-1)*PER_PAGE+1}</span> to{' '}
-                <span className="font-bold text-slate-800">{Math.min(page*PER_PAGE, filtered.length)}</span> of{' '}
+                Showing <span className="font-bold text-slate-800">{filtered.length > 0 ? (page - 1) * PER_PAGE + 1 : 0}</span> to{' '}
+                <span className="font-bold text-slate-800">{Math.min(page * PER_PAGE, filtered.length)}</span> of{' '}
                 <span className="font-bold text-slate-800">{filtered.length}</span> orders
               </p>
               <div className="flex items-center gap-1">
-                <button onClick={() => setPage(p => Math.max(1, p-1))} disabled={page === 1}
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
                   className="p-1.5 rounded-lg hover:bg-white disabled:opacity-30 text-slate-500">←</button>
                 {Array.from({ length: Math.min(totalPages, 3) }, (_, i) => i + 1).map(p => (
                   <button key={p} onClick={() => setPage(p)}
@@ -303,7 +327,7 @@ export default function OrdersPage() {
                   <button onClick={() => setPage(totalPages)}
                     className="w-8 h-8 rounded-lg text-xs font-bold text-slate-600 hover:bg-white">{totalPages}</button>
                 )}
-                <button onClick={() => setPage(p => Math.min(totalPages, p+1))} disabled={page === totalPages}
+                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
                   className="p-1.5 rounded-lg hover:bg-white disabled:opacity-30 text-slate-500">→</button>
               </div>
             </div>
@@ -311,13 +335,12 @@ export default function OrdersPage() {
         )}
       </div>
 
-      {/* Bottom Stats */}
       <div className="grid grid-cols-4 gap-6">
         {[
-          { label: 'Total Revenue', value: '—', sub: 'See Finance module' },
-          { label: 'Pending Orders', value: orders.filter(o=>o.status==='PENDING').length, sub: 'Attention Req.', color: 'text-yellow-600' },
-          { label: 'Avg. Order Qty', value: orders.length ? Math.round(orders.reduce((a,o)=>a+o.quantity,0)/orders.length) : 0, sub: 'Units' },
-          { label: 'Cancelled', value: orders.filter(o=>o.status==='CANCELLED').length, sub: 'This Period', color: 'text-red-500' },
+          { label: 'Total Orders', value: orders.length, sub: 'All Time' },
+          { label: 'Pending', value: orders.filter(o => o.status === 'PENDING').length, sub: 'Attention Req.', color: 'text-yellow-600' },
+          { label: 'Processing', value: orders.filter(o => o.status === 'PROCESSING').length, sub: 'In Progress', color: 'text-blue-600' },
+          { label: 'Delivered', value: orders.filter(o => o.status === 'DELIVERED').length, sub: 'Completed', color: 'text-emerald-600' },
         ].map(stat => (
           <div key={stat.label} className="bg-white rounded-xl p-5 border border-slate-100 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{stat.label}</p>
