@@ -62,7 +62,7 @@ export default function Sidebar() {
           <Zap className="w-5 h-5 text-white" />
         </div>
         <div>
-          <p className="font-bold text-slate-900 text-lg leading-tight">Monolith ERP</p>
+          <p className="font-bold text-slate-900 text-lg leading-tight">Monolith OMS</p>
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Enterprise Suite</p>
         </div>
       </div>
