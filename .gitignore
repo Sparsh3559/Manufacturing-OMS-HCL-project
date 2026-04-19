@@ -1,0 +1,15 @@
+# FRONTEND
+oms-frontend/node_modules
+oms-frontend/dist
+oms-frontend/.env
+
+# BACKEND
+backend/target
+backend/*.log
+
+# SYSTEM
+.DS_Store
+
+# IDE
+.idea
+.vscode
