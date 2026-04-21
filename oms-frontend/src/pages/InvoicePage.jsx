@@ -214,13 +214,13 @@ export default function InvoicePage() {
 
           {eligibleOrders.length === 0 ? (
             <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
-              <strong>No eligible orders right now.</strong>
+              <strong>No eligible orders available.</strong>
               <br /><br />
-              To generate an invoice an order must be DISPATCHED or DELIVERED.
+              Invoices can only be generated for orders with status
+              <strong> DISPATCHED</strong> or <strong> DELIVERED</strong>.
               <br /><br />
-              Go to <strong>Orders page</strong> → find any PENDING or PROCESSING order →
-              click the <strong>PROCESS</strong> → <strong>DISPATCH</strong> buttons →
-              come back here.
+              Please navigate to the <strong>Orders</strong> page and update the status of an order
+              from <strong>PENDING</strong> or <strong>PROCESSING</strong> to <strong>DISPATCHED</strong>.
               <br /><br />
               <span className="text-xs text-slate-500">Debug: {debugInfo}</span>
             </div>
@@ -301,11 +301,10 @@ export default function InvoicePage() {
       <div className="flex gap-2 flex-wrap">
         {['all', 'UNPAID', 'PARTIALLY_PAID', 'PAID', 'OVERDUE'].map(s => (
           <button key={s} onClick={() => setStatusFilter(s)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              statusFilter === s
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${statusFilter === s
                 ? 'bg-indigo-600 text-white'
                 : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-            }`}>
+              }`}>
             {s === 'all' ? 'All' : s.replace('_', ' ')}
           </button>
         ))}
