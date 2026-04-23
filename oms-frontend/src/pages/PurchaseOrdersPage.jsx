@@ -171,12 +171,14 @@ export default function PurchaseOrdersPage() {
               </select>
             </div>
             {[
-              { label: 'Supplier Name *', key: 'supplierName', placeholder: 'Exide Industries', required: true },
-              { label: 'Supplier Email', key: 'supplierEmail', placeholder: 'supplier@email.com', type: 'email' },
-              { label: 'Supplier Phone', key: 'supplierPhone', placeholder: '9876543210' },
-              { label: 'Total Amount (₹) *', key: 'totalAmount', placeholder: '125000', type: 'number', required: true },
-              { label: 'Expected Delivery', key: 'expectedDelivery', type: 'date' },
-              { label: 'Remarks', key: 'remarks', placeholder: 'Optional notes' },
+              [
+                { label: 'Supplier Name *', key: 'supplierName', placeholder: 'Exide Industries', required: true },
+                { label: 'Supplier Email', key: 'supplierEmail', placeholder: 'supplier@email.com', type: 'email', required: true },
+                { label: 'Supplier Phone', key: 'supplierPhone', placeholder: '9876543210', type: 'text', required: true },
+                { label: 'Total Amount (₹) *', key: 'totalAmount', placeholder: '125000', type: 'number', required: true },
+                { label: 'Expected Delivery', key: 'expectedDelivery', type: 'date' },
+                { label: 'Remarks', key: 'remarks', placeholder: 'Optional notes' }
+              ]
             ].map(f => (
               <div key={f.key}>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">{f.label}</label>
