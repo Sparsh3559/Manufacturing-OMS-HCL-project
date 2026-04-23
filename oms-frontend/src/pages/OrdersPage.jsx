@@ -144,8 +144,8 @@ export default function OrdersPage() {
           <form onSubmit={handleCreate} className="grid grid-cols-3 gap-4">
             {[
               { label: 'Customer Name *', key: 'customerName', type: 'text', placeholder: 'ABC Corporation', required: true },
-              { label: 'Customer Email', key: 'customerEmail', type: 'email', placeholder: 'abc@company.com' , required: true },
-              { label: 'Customer Phone', key: 'customerPhone', type: 'text', placeholder: '9876543210' , required : true },
+              { label: 'Customer Email *', key: 'customerEmail', type: 'email', placeholder: 'abc@company.com' , required: true },
+              { label: 'Customer Phone *', key: 'customerPhone', type: 'text', placeholder: '9876543210' , required : true },
               { label: 'Product Name *', key: 'productName', type: 'text', placeholder: 'UPS Machine 5KVA', required: true },
               { label: 'Quantity *', key: 'quantity', type: 'number', placeholder: '5', required: true },
               { label: 'Notes', key: 'notes', type: 'text', placeholder: 'Optional notes' },

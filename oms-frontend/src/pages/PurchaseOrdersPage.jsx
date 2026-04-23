@@ -173,8 +173,8 @@ export default function PurchaseOrdersPage() {
             {[
               [
                 { label: 'Supplier Name *', key: 'supplierName', placeholder: 'Exide Industries', required: true },
-                { label: 'Supplier Email', key: 'supplierEmail', placeholder: 'supplier@email.com', type: 'email', required: true },
-                { label: 'Supplier Phone', key: 'supplierPhone', placeholder: '9876543210', type: 'text', required: true },
+                { label: 'Supplier Email *', key: 'supplierEmail', placeholder: 'supplier@email.com', type: 'email', required: true },
+                { label: 'Supplier Phone *', key: 'supplierPhone', placeholder: '9876543210', type: 'text', required: true },
                 { label: 'Total Amount (₹) *', key: 'totalAmount', placeholder: '125000', type: 'number', required: true },
                 { label: 'Expected Delivery', key: 'expectedDelivery', type: 'date' },
                 { label: 'Remarks', key: 'remarks', placeholder: 'Optional notes' }
